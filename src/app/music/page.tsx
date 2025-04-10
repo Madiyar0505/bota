@@ -25,13 +25,27 @@ export default function MusicPage() {
     setError("")
     
     try {
-      const response = await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&key=AIzaSyDhwYqvCGwqHXHOTXnFKFXOYXXZxQCbL4Y`)
+      const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+      
+      if (!apiKey) {
+        throw new Error('YouTube API key is not configured')
+      }
+
+      const response = await fetch(
+        `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`
+      )
       
       if (!response.ok) {
         throw new Error('Failed to fetch results')
       }
 
       const data = await response.json()
+      
+      if (!data.items || data.items.length === 0) {
+        setError("По вашему запросу ничего не найдено")
+        setResults([])
+        return
+      }
       
       const formattedResults = data.items.map((item: any) => ({
         id: item.id.videoId,
@@ -42,8 +56,12 @@ export default function MusicPage() {
 
       setResults(formattedResults)
     } catch (err) {
-      setError("Ошибка при поиске музыки. Пожалуйста, попробуйте позже.")
       console.error('Search error:', err)
+      if (err instanceof Error && err.message === 'YouTube API key is not configured') {
+        setError("API ключ не настроен. Пожалуйста, обратитесь к администратору.")
+      } else {
+        setError("Ошибка при поиске музыки. Пожалуйста, попробуйте позже.")
+      }
     } finally {
       setIsLoading(false)
     }
