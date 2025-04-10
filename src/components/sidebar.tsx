@@ -54,41 +54,45 @@ export function Sidebar() {
   return (
     <div className="fixed left-0 top-0 h-full w-[240px] bg-white border-r border-pink-100">
       <div className="p-6">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
           <div className="relative">
             <div className="absolute inset-0 bg-pink-200 rounded-full blur-md opacity-50"></div>
             <Heart className="h-6 w-6 text-pink-500 relative z-10" />
           </div>
           <h1 className="text-xl font-semibold text-pink-600">Акбота</h1>
-        </div>
+        </Link>
       </div>
 
       <nav className="px-3 mt-4">
         {routes.map((route) => (
-          <div
+          <Link
             key={route.href}
+            href={route.href}
             className={cn(
-              "flex items-center gap-3 px-4 py-2.5 my-1 rounded-xl text-[15px]",
+              "flex items-center gap-3 px-4 py-2.5 my-1 rounded-xl text-[15px] transition-all duration-200 hover:bg-pink-50",
               pathname === route.href
                 ? "bg-pink-50 text-pink-600 font-medium"
-                : "text-gray-600"
+                : "text-gray-600 hover:text-pink-600"
             )}
           >
             <route.icon className={cn(
-              "h-5 w-5",
+              "h-5 w-5 transition-colors",
               pathname === route.href
                 ? "text-pink-500"
                 : "text-gray-400"
             )} />
             {route.label}
-          </div>
+          </Link>
         ))}
       </nav>
 
       <div className="absolute bottom-8 left-0 right-0 px-6">
-        <div className="w-full bg-pink-500 text-white py-2.5 rounded-xl font-medium text-[15px] text-center">
+        <button 
+          onClick={() => window.location.href = '/login'} 
+          className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2.5 rounded-xl font-medium text-[15px] transition-all duration-200"
+        >
           Войти через Google
-        </div>
+        </button>
       </div>
     </div>
   )
