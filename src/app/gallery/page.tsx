@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Heart, Upload, X, ZoomIn, ArrowLeft, ArrowRight } from "lucide-react"
-import { Navbar } from "@/components/navbar"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Sidebar } from "@/components/sidebar"
 
 interface Photo {
   id: number
@@ -162,7 +162,8 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pink-50/20 dark:to-pink-950/20">
-      <Navbar />
+      <Sidebar />
+      
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>

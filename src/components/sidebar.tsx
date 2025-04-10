@@ -1,99 +1,75 @@
 "use client"
 
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Menu } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Heart, Home, Image, Video, BookOpen, Mail, Music, Search, Bookmark } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-const routes = [
-  {
-    label: "Главная",
-    icon: Home,
-    href: "/",
-  },
-  {
-    label: "Галерея",
-    icon: Image,
-    href: "/gallery",
-  },
-  {
-    label: "Видео",
-    icon: Video,
-    href: "/video",
-  },
-  {
-    label: "Дневник",
-    icon: BookOpen,
-    href: "/diary",
-  },
-  {
-    label: "Письма",
-    icon: Mail,
-    href: "/letters",
-  },
-  {
-    label: "Музыка",
-    icon: Music,
-    href: "/music",
-  },
-  {
-    label: "Поиск",
-    icon: Search,
-    href: "/search",
-  },
-  {
-    label: "Избранное",
-    icon: Bookmark,
-    href: "/favorites",
-  },
-]
 
 export function Sidebar() {
+  const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
 
+  const menuItems = [
+    { href: "/", label: "Главная", icon: "🏠" },
+    { href: "/gallery", label: "Галерея", icon: "🖼️" },
+    { href: "/video", label: "Видео", icon: "🎥" },
+    { href: "/diary", label: "Дневник", icon: "📖" },
+    { href: "/letters", label: "Письма", icon: "✉️" },
+    { href: "/music", label: "Музыка", icon: "🎵" },
+    { href: "/search", label: "Поиск", icon: "🔍" },
+    { href: "/favorites", label: "Избранное", icon: "⭐" },
+  ]
+
   return (
-    <div className="fixed left-0 top-0 h-full w-[240px] bg-white border-r border-pink-100">
-      <div className="p-6">
-        <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
-          <div className="relative">
-            <div className="absolute inset-0 bg-pink-200 rounded-full blur-md opacity-50"></div>
-            <Heart className="h-6 w-6 text-pink-500 relative z-10" />
-          </div>
-          <h1 className="text-xl font-semibold text-pink-600">Акбота</h1>
-        </Link>
-      </div>
+    <>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:bg-gray-100 transition-colors"
+      >
+        <Menu className="h-6 w-6 text-pink-500" />
+      </button>
 
-      <nav className="px-3 mt-4">
-        {routes.map((route) => (
-          <Link
-            key={route.href}
-            href={route.href}
-            className={cn(
-              "flex items-center gap-3 px-4 py-2.5 my-1 rounded-xl text-[15px] transition-all duration-200 hover:bg-pink-50",
-              pathname === route.href
-                ? "bg-pink-50 text-pink-600 font-medium"
-                : "text-gray-600 hover:text-pink-600"
-            )}
-          >
-            <route.icon className={cn(
-              "h-5 w-5 transition-colors",
-              pathname === route.href
-                ? "text-pink-500"
-                : "text-gray-400"
-            )} />
-            {route.label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="absolute bottom-8 left-0 right-0 px-6">
-        <button 
-          onClick={() => window.location.href = '/login'} 
-          className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2.5 rounded-xl font-medium text-[15px] transition-all duration-200"
-        >
-          Войти через Google
-        </button>
-      </div>
-    </div>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-black z-40"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", bounce: 0.2 }}
+              className="fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-40"
+            >
+              <div className="p-6">
+                <h1 className="text-2xl font-bold text-pink-500 mb-6">Акбота</h1>
+                <nav className="space-y-4">
+                  {menuItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                        pathname === item.href
+                          ? "bg-pink-50 text-pink-500"
+                          : "text-gray-600 hover:text-pink-500 hover:bg-pink-50"
+                      }`}
+                    >
+                      <span>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   )
 } 

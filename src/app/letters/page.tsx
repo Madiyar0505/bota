@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Send, Plus } from "lucide-react"
+import { Send, Plus, Trash2 } from "lucide-react"
 
 interface Letter {
   id: string
@@ -31,6 +31,12 @@ export default function LettersPage() {
     setTitle("")
     setContent("")
     setShowForm(false)
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm('Вы уверены, что хотите удалить это письмо?')) {
+      setLetters(letters.filter(letter => letter.id !== id))
+    }
   }
 
   return (
@@ -108,7 +114,16 @@ export default function LettersPage() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-medium text-lg">{letter.title}</h3>
-                  <span className="text-sm text-gray-500">{letter.date}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-gray-500">{letter.date}</span>
+                    <button
+                      onClick={() => handleDelete(letter.id)}
+                      className="text-red-500 hover:text-red-600 transition-colors p-1"
+                      title="Удалить письмо"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-gray-600 whitespace-pre-wrap">{letter.content}</p>
               </div>
