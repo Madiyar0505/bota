@@ -1,49 +1,13 @@
 "use client"
 
-import { Navbar } from "@/components/navbar"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { useState } from "react"
-import { Search, Play, Pause, Volume2 } from "lucide-react"
-
-interface Song {
-  id: number
-  title: string
-  youtubeId: string
-}
+import { Search } from "lucide-react"
 
 export default function MusicPage() {
-  const [currentSong, setCurrentSong] = useState<Song | null>(null)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [error, setError] = useState('')
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          query
-        )}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&maxResults=1`
-      )
-
-      const data = await response.json()
-
-      if (data.items && data.items.length > 0) {
-        const video = data.items[0]
-        setCurrentSong({
-          id: Date.now(),
-          title: video.snippet.title,
-          youtubeId: video.id.videoId
-        })
-        setIsPlaying(true)
-      }
-    } catch (error) {
-      console.error("Ошибка при поиске:", error)
-    }
-  }
 
   const searchMusic = async () => {
     if (!query) return
@@ -67,7 +31,6 @@ export default function MusicPage() {
       }
 
       const data = await response.json()
-      console.log('Search results:', data)
       
       if (!data.items || data.items.length === 0) {
         throw new Error('No results found')
@@ -83,19 +46,15 @@ export default function MusicPage() {
     }
   }
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying)
-  }
-
   return (
-    <div className="flex min-h-screen bg-white">
-      <main className="flex-1 px-4 py-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-        <h1 className="text-2xl sm:text-3xl font-bold text-pink-500 mb-6">
+    <div className="min-h-screen w-full">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-pink-500 mb-6 text-center">
           Наша Музыка
         </h1>
 
-        <div className="max-w-xl mx-auto">
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="max-w-xl mx-auto mb-8">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={query}
@@ -113,51 +72,51 @@ export default function MusicPage() {
               <span>Найти</span>
             </button>
           </div>
-
-          {error && (
-            <div className="text-red-500 mb-4 text-center text-sm">{error}</div>
-          )}
-
-          {isLoading && (
-            <div className="text-center text-gray-500 py-8">Загрузка...</div>
-          )}
-
-          {!isLoading && results.length > 0 && (
-            <div className="space-y-4">
-              {results.map((video: any) => (
-                <div
-                  key={video.id.videoId}
-                  className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors"
-                >
-                  <div className="w-full sm:w-40 h-48 sm:h-24 flex-shrink-0">
-                    <img
-                      src={video.snippet.thumbnails.medium.url}
-                      alt={video.snippet.title}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-base sm:text-lg mb-2 line-clamp-2">
-                      {video.snippet.title}
-                    </h3>
-                    <p className="text-gray-600 text-xs sm:text-sm mb-2">
-                      {video.snippet.channelTitle}
-                    </p>
-                    <a
-                      href={`https://www.youtube.com/watch?v=${video.id.videoId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-pink-500 hover:text-pink-600 transition-colors text-sm"
-                    >
-                      Смотреть на YouTube
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
-      </main>
+
+        {error && (
+          <div className="text-red-500 mb-6 text-center text-sm">{error}</div>
+        )}
+
+        {isLoading && (
+          <div className="text-center text-gray-500 py-8">Загрузка...</div>
+        )}
+
+        {!isLoading && results.length > 0 && (
+          <div className="space-y-4">
+            {results.map((video: any) => (
+              <div
+                key={video.id.videoId}
+                className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors bg-white"
+              >
+                <div className="w-full sm:w-40 h-48 sm:h-24 flex-shrink-0">
+                  <img
+                    src={video.snippet.thumbnails.medium.url}
+                    alt={video.snippet.title}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-base sm:text-lg mb-2 line-clamp-2">
+                    {video.snippet.title}
+                  </h3>
+                  <p className="text-gray-600 text-xs sm:text-sm mb-2">
+                    {video.snippet.channelTitle}
+                  </p>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${video.id.videoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-pink-500 hover:text-pink-600 transition-colors text-sm"
+                  >
+                    Смотреть на YouTube
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 } 
