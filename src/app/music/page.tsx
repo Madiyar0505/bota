@@ -50,29 +50,33 @@ export default function MusicPage() {
     
     setIsLoading(true)
     setError('')
+    setResults([])
+
     try {
-      console.log('Searching for:', query)
+      const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+      if (!apiKey) {
+        throw new Error('YouTube API key is not configured')
+      }
+
       const response = await fetch(
-        `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`
       )
       
       if (!response.ok) {
-        const errorData = await response.json()
-        console.error('YouTube API Error:', errorData)
-        throw new Error(errorData.error?.message || 'Failed to fetch results')
+        throw new Error('Failed to fetch results from YouTube')
       }
 
       const data = await response.json()
       console.log('Search results:', data)
       
-      if (!data.items) {
+      if (!data.items || data.items.length === 0) {
         throw new Error('No results found')
       }
       
       setResults(data.items)
-    } catch (error) {
-      console.error('Error searching videos:', error)
-      setError(error.message)
+    } catch (err) {
+      console.error('Error searching videos:', err)
+      setError(err instanceof Error ? err.message : 'An error occurred while searching')
       setResults([])
     } finally {
       setIsLoading(false)
