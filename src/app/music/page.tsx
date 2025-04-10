@@ -88,116 +88,76 @@ export default function MusicPage() {
   }
 
   return (
-    <div className="min-h-screen w-full">
-      {/* Main content */}
-      <div className="pb-24 px-4 sm:px-6 md:pl-[280px]">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-pink-500 mb-4 sm:mb-6 pt-4">
+    <div className="flex min-h-screen bg-white">
+      <main className="flex-1 px-4 py-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold text-pink-500 mb-6">
           Наша Музыка
         </h1>
 
-        {/* Search section */}
-        <div className="space-y-3 sm:space-y-0 sm:flex sm:gap-3 mb-6">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && searchMusic()}
-            placeholder="Найти музыку..."
-            className="w-full px-4 py-3 rounded-xl border border-pink-200 focus:border-pink-500 focus:outline-none text-base"
-          />
-          <button
-            onClick={searchMusic}
-            disabled={isLoading}
-            className="w-full sm:w-auto px-6 py-3 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors flex items-center justify-center gap-2"
-          >
-            <Search className="w-5 h-5" />
-            <span>Найти</span>
-          </button>
-        </div>
-
-        {/* Error message */}
-        {error && (
-          <div className="text-red-500 mb-4 text-center text-sm sm:text-base">{error}</div>
-        )}
-
-        {/* Loading state */}
-        {isLoading && (
-          <div className="text-center text-gray-500 py-8">Загрузка...</div>
-        )}
-
-        {/* Results grid */}
-        {!isLoading && results.length > 0 && (
-          <div className="space-y-4">
-            {results.map((video: any) => (
-              <div
-                key={video.id.videoId}
-                className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors bg-white"
-              >
-                {/* Thumbnail */}
-                <div className="w-full sm:w-40 h-48 sm:h-24 flex-shrink-0">
-                  <img
-                    src={video.snippet.thumbnails.medium.url}
-                    alt={video.snippet.title}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-                {/* Video info */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-base sm:text-lg mb-2 line-clamp-2">
-                    {video.snippet.title}
-                  </h3>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-2">
-                    {video.snippet.channelTitle}
-                  </p>
-                  <a
-                    href={`https://www.youtube.com/watch?v=${video.id.videoId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block text-pink-500 hover:text-pink-600 transition-colors text-sm sm:text-base"
-                  >
-                    Смотреть на YouTube
-                  </a>
-                </div>
-              </div>
-            ))}
+        <div className="max-w-xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-3 mb-6">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && searchMusic()}
+              placeholder="Найти музыку..."
+              className="flex-1 px-4 py-2 rounded-xl border border-pink-200 focus:border-pink-500 focus:outline-none text-base"
+            />
+            <button
+              onClick={searchMusic}
+              disabled={isLoading}
+              className="w-full sm:w-auto px-6 py-2 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <Search className="w-5 h-5" />
+              <span>Найти</span>
+            </button>
           </div>
-        )}
-      </div>
 
-      {/* Fixed bottom player */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-pink-200 shadow-lg">
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3">
-            {/* Song info */}
-            <div className="flex-1 min-w-0">
-              {currentSong ? (
-                <h3 className="text-base font-medium text-pink-600 truncate">
-                  {currentSong.title}
-                </h3>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  Найдите песню для воспроизведения
-                </p>
-              )}
-            </div>
+          {error && (
+            <div className="text-red-500 mb-4 text-center text-sm">{error}</div>
+          )}
 
-            {/* Controls */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handlePlayPause}
-                className="p-2 rounded-full bg-pink-500 hover:bg-pink-600 transition-colors"
-                disabled={!currentSong}
-              >
-                {isPlaying ? (
-                  <Pause className="w-5 h-5 text-white" />
-                ) : (
-                  <Play className="w-5 h-5 text-white" />
-                )}
-              </button>
+          {isLoading && (
+            <div className="text-center text-gray-500 py-8">Загрузка...</div>
+          )}
+
+          {!isLoading && results.length > 0 && (
+            <div className="space-y-4">
+              {results.map((video: any) => (
+                <div
+                  key={video.id.videoId}
+                  className="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors"
+                >
+                  <div className="w-full sm:w-40 h-48 sm:h-24 flex-shrink-0">
+                    <img
+                      src={video.snippet.thumbnails.medium.url}
+                      alt={video.snippet.title}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-base sm:text-lg mb-2 line-clamp-2">
+                      {video.snippet.title}
+                    </h3>
+                    <p className="text-gray-600 text-xs sm:text-sm mb-2">
+                      {video.snippet.channelTitle}
+                    </p>
+                    <a
+                      href={`https://www.youtube.com/watch?v=${video.id.videoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-pink-500 hover:text-pink-600 transition-colors text-sm"
+                    >
+                      Смотреть на YouTube
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
-      </div>
+      </main>
     </div>
   )
 } 
