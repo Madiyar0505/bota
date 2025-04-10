@@ -88,38 +88,40 @@ export default function MusicPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-pink-50/20 dark:to-pink-950/20">
+    <div className="min-h-screen w-full px-4 md:pl-[280px] py-6">
       <Navbar />
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
       
-      <main className="max-w-7xl mx-auto px-4 py-8 pb-32">
-        <h1 className="text-4xl font-bold text-center mb-8 text-pink-500">Наша Музыка</h1>
+      <main className="max-w-7xl mx-auto">
+        <h1 className="text-2xl md:text-4xl font-bold text-pink-500 mb-6">
+          Наша Музыка
+        </h1>
 
-        {/* Поиск */}
-        <div className="max-w-2xl mx-auto mb-12">
-          <form onSubmit={handleSearch} className="flex gap-2">
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
+          <div className="flex-1">
             <input
               type="text"
-              placeholder="Введите название песни..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && searchMusic()}
-              className="flex-1 px-4 py-2 rounded-lg border border-pink-200 dark:border-pink-800 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              placeholder="Найти музыку..."
+              className="w-full px-4 py-2 rounded-xl border border-pink-200 focus:border-pink-500 focus:outline-none text-base"
             />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg flex items-center gap-2 text-lg"
-            >
-              <Search className="w-5 h-5" />
-              Найти
-            </button>
-          </form>
+          </div>
+          <button
+            onClick={searchMusic}
+            disabled={isLoading}
+            className="w-full md:w-auto px-6 py-2 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <Search className="w-5 h-5" />
+            Найти
+          </button>
         </div>
 
         {error && (
-          <div className="text-red-500 mb-4">{error}</div>
+          <div className="text-red-500 mb-4 text-center text-sm md:text-base">{error}</div>
         )}
 
         {/* Текущая песня */}
@@ -148,21 +150,23 @@ export default function MusicPage() {
             {results.map((video: any) => (
               <div
                 key={video.id.videoId}
-                className="flex gap-4 p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors"
+                className="flex flex-col md:flex-row gap-3 p-3 md:p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors"
               >
-                <img
-                  src={video.snippet.thumbnails.medium.url}
-                  alt={video.snippet.title}
-                  className="w-40 h-24 object-cover rounded-lg"
-                />
+                <div className="w-full md:w-40">
+                  <img
+                    src={video.snippet.thumbnails.medium.url}
+                    alt={video.snippet.title}
+                    className="w-full md:w-40 h-48 md:h-24 object-cover rounded-lg"
+                  />
+                </div>
                 <div className="flex-1">
-                  <h3 className="font-medium text-lg mb-2">{video.snippet.title}</h3>
-                  <p className="text-gray-600 text-sm">{video.snippet.channelTitle}</p>
+                  <h3 className="font-medium text-base md:text-lg mb-2">{video.snippet.title}</h3>
+                  <p className="text-gray-600 text-xs md:text-sm">{video.snippet.channelTitle}</p>
                   <a
                     href={`https://www.youtube.com/watch?v=${video.id.videoId}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block mt-2 text-pink-500 hover:text-pink-600 transition-colors"
+                    className="inline-block mt-2 text-pink-500 hover:text-pink-600 transition-colors text-sm md:text-base"
                   >
                     Смотреть на YouTube
                   </a>
