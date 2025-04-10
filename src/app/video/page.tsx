@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Upload, X, Heart } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -23,16 +23,23 @@ interface FavoriteItem {
 }
 
 export default function VideoPage() {
-  const [videos, setVideos] = useState<Video[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('videos')
-      return saved ? JSON.parse(saved) : []
-    }
-    return []
-  })
+  const [videos, setVideos] = useState<Video[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Load videos from localStorage when component mounts
+  useEffect(() => {
+    const savedVideos = localStorage.getItem('videos')
+    if (savedVideos) {
+      setVideos(JSON.parse(savedVideos))
+    }
+  }, [])
+
+  // Save videos to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('videos', JSON.stringify(videos))
+  }, [videos])
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
@@ -60,7 +67,6 @@ export default function VideoPage() {
                 isFavorite: false
               }
               setVideos(prev => [...prev, newVideo])
-              localStorage.setItem('videos', JSON.stringify([...videos, newVideo]))
               resolve()
             }
           }
@@ -76,21 +82,17 @@ export default function VideoPage() {
   }
 
   const toggleFavorite = (videoId: number) => {
-    setVideos(prev => {
-      const updated = prev.map(video => 
-        video.id === videoId ? { ...video, isFavorite: !video.isFavorite } : video
+    setVideos(prev => 
+      prev.map(video => 
+        video.id === videoId 
+          ? { ...video, isFavorite: !video.isFavorite } 
+          : video
       )
-      localStorage.setItem('videos', JSON.stringify(updated))
-      return updated
-    })
+    )
   }
 
   const deleteVideo = (videoId: number) => {
-    setVideos(prev => {
-      const updated = prev.filter(video => video.id !== videoId)
-      localStorage.setItem('videos', JSON.stringify(updated))
-      return updated
-    })
+    setVideos(prev => prev.filter(video => video.id !== videoId))
   }
 
   return (
@@ -132,6 +134,9 @@ export default function VideoPage() {
                 const files = e.target.files ? Array.from(e.target.files) : []
                 if (files.length > 0) {
                   handleFiles(files)
+                }
+                if (e.target) {
+                  e.target.value = '' // Reset input after upload
                 }
               }}
             />
