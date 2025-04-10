@@ -11,8 +11,6 @@ interface Song {
   youtubeId: string
 }
 
-const YOUTUBE_API_KEY = "AlzaSyDtSKdM6It-NZiWDyuZK5ZYo1JLgiA0JZ4"
-
 export default function MusicPage() {
   const [currentSong, setCurrentSong] = useState<Song | null>(null)
   const [query, setQuery] = useState('')
@@ -27,7 +25,7 @@ export default function MusicPage() {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
           query
-        )}&type=video&key=${YOUTUBE_API_KEY}&maxResults=1`
+        )}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&maxResults=1`
       )
 
       const data = await response.json()
@@ -51,7 +49,7 @@ export default function MusicPage() {
     
     setIsLoading(true)
     try {
-      const response = await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${query}&type=video&key=${YOUTUBE_API_KEY}`)
+      const response = await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${query}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`)
       const data = await response.json()
       setResults(data.items || [])
     } catch (error) {
