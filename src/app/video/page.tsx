@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Heart, X } from "lucide-react"
+import { Upload, X, Heart } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Sidebar } from "@/components/sidebar"
 
@@ -30,54 +30,67 @@ export default function VideoPage() {
     }
     return []
   })
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]') as FavoriteItem[]
-    const updatedVideos = videos.map(video => ({
-      ...video,
-      isFavorite: favorites.some(item => 
-        item.type === 'video' && item.id === video.id.toString()
-      )
-    }))
-    setVideos(updatedVideos)
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem('videos', JSON.stringify(videos))
-  }, [videos])
-
-  const toggleFavorite = (video: Video) => {
-    const updatedVideos = videos.map(v => 
-      v.id === video.id ? { ...v, isFavorite: !v.isFavorite } : v
-    )
-    setVideos(updatedVideos)
-
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]') as FavoriteItem[]
-    const videoExists = favorites.some(item => 
-      item.type === 'video' && item.id === video.id.toString()
-    )
-
-    let updatedFavorites: FavoriteItem[]
-    if (videoExists) {
-      updatedFavorites = favorites.filter(item => 
-        !(item.type === 'video' && item.id === video.id.toString())
-      )
-    } else {
-      updatedFavorites = [...favorites, {
-        id: video.id.toString(),
-        type: 'video',
-        title: video.title,
-        url: video.url,
-        date: video.date
-      }]
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('video/'))
+    if (files.length > 0) {
+      await handleFiles(files)
     }
-    
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites))
+  }
+
+  const handleFiles = async (files: File[]) => {
+    setIsUploading(true)
+    try {
+      for (const file of files) {
+        const reader = new FileReader()
+        await new Promise<void>((resolve, reject) => {
+          reader.onload = async (e) => {
+            const result = e.target?.result
+            if (result) {
+              const newVideo = {
+                id: Date.now() + Math.random(),
+                url: result as string,
+                title: file.name.split('.')[0],
+                date: new Date().toLocaleDateString('ru-RU'),
+                isFavorite: false
+              }
+              setVideos(prev => [...prev, newVideo])
+              localStorage.setItem('videos', JSON.stringify([...videos, newVideo]))
+              resolve()
+            }
+          }
+          reader.onerror = () => reject(reader.error)
+          reader.readAsDataURL(file)
+        })
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const toggleFavorite = (videoId: number) => {
+    setVideos(prev => {
+      const updated = prev.map(video => 
+        video.id === videoId ? { ...video, isFavorite: !video.isFavorite } : video
+      )
+      localStorage.setItem('videos', JSON.stringify(updated))
+      return updated
+    })
   }
 
   const deleteVideo = (videoId: number) => {
-    setVideos(prev => prev.filter(v => v.id !== videoId))
+    setVideos(prev => {
+      const updated = prev.filter(video => video.id !== videoId)
+      localStorage.setItem('videos', JSON.stringify(updated))
+      return updated
+    })
   }
 
   return (
@@ -87,12 +100,55 @@ export default function VideoPage() {
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      
+
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-center mb-12 text-pink-500">Видео</h1>
 
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="max-w-4xl mx-auto">
+          <div
+            className={`mb-8 p-8 border-2 border-dashed rounded-xl transition-colors text-center
+              ${isDragging 
+                ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/20' 
+                : 'border-gray-300 dark:border-gray-700 hover:border-pink-300 dark:hover:border-pink-700'
+              }`}
+            onDragOver={(e) => {
+              e.preventDefault()
+              setIsDragging(true)
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault()
+              setIsDragging(false)
+            }}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/*"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = e.target.files ? Array.from(e.target.files) : []
+                if (files.length > 0) {
+                  handleFiles(files)
+                }
+              }}
+            />
+            <div className="flex flex-col items-center gap-2">
+              <Upload className="w-8 h-8 text-pink-500" />
+              <p className="text-lg font-medium">
+                {isUploading 
+                  ? 'Загрузка...' 
+                  : isDragging
+                  ? 'Отпустите файлы здесь'
+                  : 'Нажмите или перетащите видео сюда'}
+              </p>
+              <p className="text-sm text-gray-500">Поддерживаются MP4, WebM</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
               {videos.map((video) => (
                 <motion.div
@@ -113,11 +169,15 @@ export default function VideoPage() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => toggleFavorite(video)}
+                      onClick={() => toggleFavorite(video.id)}
                       className="p-2 bg-white/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Heart 
-                        className={`h-5 w-5 text-pink-500 transition-colors ${video.isFavorite ? 'fill-pink-500' : ''}`}
+                        className={`h-5 w-5 transition-colors ${
+                          video.isFavorite 
+                            ? 'text-pink-500 fill-pink-500' 
+                            : 'text-pink-500'
+                        }`}
                       />
                     </motion.button>
                     <motion.button
