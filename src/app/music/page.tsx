@@ -17,6 +17,7 @@ export default function MusicPage() {
   const [results, setResults] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,12 +49,31 @@ export default function MusicPage() {
     if (!query) return
     
     setIsLoading(true)
+    setError('')
     try {
-      const response = await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${query}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`)
+      console.log('Searching for:', query)
+      const response = await fetch(
+        `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
+      )
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('YouTube API Error:', errorData)
+        throw new Error(errorData.error?.message || 'Failed to fetch results')
+      }
+
       const data = await response.json()
-      setResults(data.items || [])
+      console.log('Search results:', data)
+      
+      if (!data.items) {
+        throw new Error('No results found')
+      }
+      
+      setResults(data.items)
     } catch (error) {
       console.error('Error searching videos:', error)
+      setError(error.message)
+      setResults([])
     } finally {
       setIsLoading(false)
     }
@@ -93,6 +113,10 @@ export default function MusicPage() {
             </button>
           </form>
         </div>
+
+        {error && (
+          <div className="text-red-500 mb-4">{error}</div>
+        )}
 
         {/* Текущая песня */}
         {currentSong && (
