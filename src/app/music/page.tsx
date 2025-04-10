@@ -13,7 +13,9 @@ interface Song {
 
 export default function MusicPage() {
   const [currentSong, setCurrentSong] = useState<Song | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -22,8 +24,8 @@ export default function MusicPage() {
     try {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(
-          searchQuery
-        )}&type=video&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}&maxResults=1`
+          query
+        )}&type=video&key=AIzaSyDjc8qhQgKVZLgPEzGXVwQj6iBXfGTQkrk&maxResults=1`
       )
 
       const data = await response.json()
@@ -39,6 +41,21 @@ export default function MusicPage() {
       }
     } catch (error) {
       console.error("Ошибка при поиске:", error)
+    }
+  }
+
+  const searchMusic = async () => {
+    if (!query) return
+    
+    setIsLoading(true)
+    try {
+      const response = await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${query}&type=video&key=AIzaSyDjc8qhQgKVZLgPEzGXVwQj6iBXfGTQkrk`)
+      const data = await response.json()
+      setResults(data.items || [])
+    } catch (error) {
+      console.error('Error searching videos:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -62,8 +79,9 @@ export default function MusicPage() {
             <input
               type="text"
               placeholder="Введите название песни..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && searchMusic()}
               className="flex-1 px-4 py-2 rounded-lg border border-pink-200 dark:border-pink-800 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
             />
             <button
@@ -92,6 +110,37 @@ export default function MusicPage() {
             <h3 className="text-lg font-medium text-pink-600 dark:text-pink-400 mt-4">
               {currentSong.title}
             </h3>
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="text-center text-gray-500">Загрузка...</div>
+        ) : (
+          <div className="grid gap-4">
+            {results.map((video: any) => (
+              <div
+                key={video.id.videoId}
+                className="flex gap-4 p-4 rounded-xl border border-pink-100 hover:border-pink-200 transition-colors"
+              >
+                <img
+                  src={video.snippet.thumbnails.medium.url}
+                  alt={video.snippet.title}
+                  className="w-40 h-24 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <h3 className="font-medium text-lg mb-2">{video.snippet.title}</h3>
+                  <p className="text-gray-600 text-sm">{video.snippet.channelTitle}</p>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${video.id.videoId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 text-pink-500 hover:text-pink-600 transition-colors"
+                  >
+                    Смотреть на YouTube
+                  </a>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </main>
