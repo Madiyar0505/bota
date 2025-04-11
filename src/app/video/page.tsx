@@ -1,207 +1,108 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Upload, X, Heart } from "lucide-react"
+import { useState, useCallback } from 'react'
+import { useDropzone } from 'react-dropzone'
+import { Upload } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Sidebar } from "@/components/sidebar"
 
-interface Video {
-  id: number
-  url: string
-  title: string
-  date: string
-  isFavorite?: boolean
-}
-
-interface FavoriteItem {
-  id: string
-  type: string
-  title: string
-  url: string
-  date: string
-}
-
 export default function VideoPage() {
-  const [videos, setVideos] = useState<Video[]>([])
-  const [isDragging, setIsDragging] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [videos, setVideos] = useState<File[]>([])
+  const [error, setError] = useState<string>("")
 
-  // Load videos from localStorage when component mounts
-  useEffect(() => {
-    const savedVideos = localStorage.getItem('videos')
-    if (savedVideos) {
-      setVideos(JSON.parse(savedVideos))
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const validVideos = acceptedFiles.filter(file => 
+      file.type === 'video/mp4' || file.type === 'video/webm'
+    )
+
+    if (validVideos.length !== acceptedFiles.length) {
+      setError("Поддерживаются только MP4 и WebM форматы")
+      return
     }
+
+    setError("")
+    setVideos(prev => [...prev, ...validVideos])
   }, [])
 
-  // Save videos to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('videos', JSON.stringify(videos))
-  }, [videos])
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('video/'))
-    if (files.length > 0) {
-      await handleFiles(files)
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'video/mp4': ['.mp4'],
+      'video/webm': ['.webm']
     }
-  }
+  })
 
-  const handleFiles = async (files: File[]) => {
-    setIsUploading(true)
-    try {
-      for (const file of files) {
-        const reader = new FileReader()
-        await new Promise<void>((resolve, reject) => {
-          reader.onload = async (e) => {
-            const result = e.target?.result
-            if (result) {
-              const newVideo = {
-                id: Date.now() + Math.random(),
-                url: result as string,
-                title: file.name.split('.')[0],
-                date: new Date().toLocaleDateString('ru-RU'),
-                isFavorite: false
-              }
-              setVideos(prev => [...prev, newVideo])
-              resolve()
-            }
-          }
-          reader.onerror = () => reject(reader.error)
-          reader.readAsDataURL(file)
-        })
-      }
-    } catch (error) {
-      console.error('Error uploading files:', error)
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const toggleFavorite = (videoId: number) => {
-    setVideos(prev => 
-      prev.map(video => 
-        video.id === videoId 
-          ? { ...video, isFavorite: !video.isFavorite } 
-          : video
-      )
-    )
-  }
-
-  const deleteVideo = (videoId: number) => {
-    setVideos(prev => prev.filter(video => video.id !== videoId))
+  const removeVideo = (index: number) => {
+    setVideos(prev => prev.filter((_, i) => i !== index))
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pink-50/20 dark:to-pink-950/20">
       <Sidebar />
       
-      <div className="absolute top-4 right-4">
+      <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-12 text-pink-500">Видео</h1>
+        <h1 className="text-4xl font-bold text-center mb-8 text-pink-500">Видео</h1>
 
         <div className="max-w-4xl mx-auto">
           <div
-            className={`mb-8 p-8 border-2 border-dashed rounded-xl transition-colors text-center
-              ${isDragging 
-                ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/20' 
-                : 'border-gray-300 dark:border-gray-700 hover:border-pink-300 dark:hover:border-pink-700'
-              }`}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setIsDragging(true)
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault()
-              setIsDragging(false)
-            }}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
+            {...getRootProps()}
+            className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors
+              ${isDragActive 
+                ? 'border-pink-500 bg-pink-50 dark:bg-pink-950/10' 
+                : 'border-gray-300 hover:border-pink-500'}`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="video/*"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                const files = e.target.files ? Array.from(e.target.files) : []
-                if (files.length > 0) {
-                  handleFiles(files)
-                }
-                if (e.target) {
-                  e.target.value = '' // Reset input after upload
-                }
-              }}
-            />
-            <div className="flex flex-col items-center gap-2">
-              <Upload className="w-8 h-8 text-pink-500" />
-              <p className="text-lg font-medium">
-                {isUploading 
-                  ? 'Загрузка...' 
-                  : isDragging
-                  ? 'Отпустите файлы здесь'
-                  : 'Нажмите или перетащите видео сюда'}
-              </p>
-              <p className="text-sm text-gray-500">Поддерживаются MP4, WebM</p>
-            </div>
+            <input {...getInputProps()} />
+            <Upload className="w-12 h-12 mx-auto mb-4 text-pink-500" />
+            <p className="text-lg mb-2">
+              {isDragActive
+                ? "Перетащите видео сюда"
+                : "Нажмите или перетащите видео сюда"}
+            </p>
+            <p className="text-sm text-gray-500">Поддерживаются MP4, WebM</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence>
-              {videos.map((video) => (
-                <motion.div
-                  key={video.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="relative group"
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 dark:bg-red-950/10 text-red-500 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {videos.length > 0 && (
+            <div className="mt-8 space-y-4">
+              {videos.map((video, index) => (
+                <div 
+                  key={`${video.name}-${index}`}
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
                 >
-                  <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                    <video
-                      src={video.url}
-                      controls
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => toggleFavorite(video.id)}
-                      className="p-2 bg-white/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  <video 
+                    className="w-full aspect-video"
+                    controls
+                    src={URL.createObjectURL(video)}
+                  />
+                  <div className="p-4 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-gray-800 dark:text-gray-200">
+                        {video.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {(video.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeVideo(index)}
+                      className="px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/10 rounded-lg transition-colors"
                     >
-                      <Heart 
-                        className={`h-5 w-5 transition-colors ${
-                          video.isFavorite 
-                            ? 'text-pink-500 fill-pink-500' 
-                            : 'text-pink-500'
-                        }`}
-                      />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => deleteVideo(video.id)}
-                      className="p-2 bg-white/80 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-5 w-5 text-pink-500" />
-                    </motion.button>
+                      Удалить
+                    </button>
                   </div>
-                  <div className="mt-2">
-                    <h3 className="text-lg font-medium text-gray-800 dark:text-gray-200">{video.title}</h3>
-                    <p className="text-sm text-gray-500">{video.date}</p>
-                  </div>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
-          </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
