@@ -19,6 +19,7 @@ export default function MusicPage() {
   const [error, setError] = useState("")
   const [currentTrack, setCurrentTrack] = useState<SearchResult | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [isVideoError, setIsVideoError] = useState(false)
 
   useEffect(() => {
     try {
@@ -35,11 +36,17 @@ export default function MusicPage() {
     }
   }, [])
 
+  // Reset video error when changing tracks
+  useEffect(() => {
+    setIsVideoError(false)
+  }, [currentTrack])
+
   const searchMusic = async () => {
     if (!query.trim()) return
 
     setIsLoading(true)
     setError("")
+    setIsVideoError(false)
     
     try {
       const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
@@ -84,6 +91,16 @@ export default function MusicPage() {
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleVideoError = () => {
+    setIsVideoError(true)
+    if (currentTrack) {
+      const nextTrack = results.find(result => result.id !== currentTrack.id)
+      if (nextTrack) {
+        setCurrentTrack(nextTrack)
+      }
     }
   }
 
@@ -135,17 +152,16 @@ export default function MusicPage() {
             </button>
           </div>
 
-          {currentTrack && (
+          {currentTrack && !isVideoError && (
             <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-              <div className="aspect-video w-full">
+              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                 <iframe
-                  width="100%"
-                  height="100%"
                   src={`https://www.youtube.com/embed/${currentTrack.id}?autoplay=1&playsinline=1`}
                   title={currentTrack.title}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  className="w-full h-full"
+                  className="absolute top-0 left-0 w-full h-full"
+                  onError={handleVideoError}
                 />
               </div>
               <div className="p-4">
@@ -164,11 +180,11 @@ export default function MusicPage() {
                 onClick={() => setCurrentTrack(result)}
                 className="cursor-pointer group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
               >
-                <div className="aspect-video relative">
+                <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                   <img
                     src={result.thumbnail}
                     alt={result.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    className="absolute top-0 left-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
                     <div className="h-12 w-12 flex items-center justify-center bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
