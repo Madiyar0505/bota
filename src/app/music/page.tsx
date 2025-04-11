@@ -1,10 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Sidebar } from "@/components/sidebar"
-import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 
 interface SearchResult {
   id: string
@@ -13,27 +12,28 @@ interface SearchResult {
   channelTitle: string
 }
 
-function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <h2 className="text-2xl font-bold text-red-500 mb-4">Что-то пошло не так</h2>
-      <p className="text-gray-600 mb-4">{error.message}</p>
-      <button
-        onClick={resetErrorBoundary}
-        className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600"
-      >
-        Попробовать снова
-      </button>
-    </div>
-  )
-}
-
-function MusicPageContent() {
+export default function MusicPage() {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [currentTrack, setCurrentTrack] = useState<SearchResult | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    try {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth <= 768)
+      }
+      
+      checkMobile()
+      window.addEventListener('resize', checkMobile)
+      
+      return () => window.removeEventListener('resize', checkMobile)
+    } catch (err) {
+      console.error('Mobile check error:', err)
+    }
+  }, [])
 
   const searchMusic = async () => {
     if (!query.trim()) return
@@ -49,7 +49,7 @@ function MusicPageContent() {
       }
 
       const response = await fetch(
-        `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`
+        `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`
       )
       
       if (!response.ok) {
@@ -87,19 +87,34 @@ function MusicPageContent() {
     }
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <h2 className="text-2xl font-bold text-red-500 mb-4">Произошла ошибка</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button
+          onClick={() => setError("")}
+          className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600"
+        >
+          Попробовать снова
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pink-50/20 dark:to-pink-950/20">
       <Sidebar />
       
-      <div className="absolute top-4 right-4">
+      <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-12 text-pink-500">Музыка</h1>
+        <h1 className="text-4xl font-bold text-center mb-8 text-pink-500">Музыка</h1>
 
-        <div className="max-w-4xl mx-auto">
-          <div className="flex gap-4 mb-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
             <div className="relative flex-1">
               <input
                 type="text"
@@ -114,17 +129,11 @@ function MusicPageContent() {
             <button
               onClick={searchMusic}
               disabled={isLoading}
-              className="px-6 py-3 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors disabled:opacity-50"
+              className="px-6 py-3 bg-pink-500 text-white rounded-xl hover:bg-pink-600 transition-colors disabled:opacity-50 sm:w-auto w-full"
             >
               {isLoading ? 'Поиск...' : 'Найти'}
             </button>
           </div>
-
-          {error && (
-            <div className="text-red-500 text-center mb-8">
-              {error}
-            </div>
-          )}
 
           {currentTrack && (
             <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -132,7 +141,7 @@ function MusicPageContent() {
                 <iframe
                   width="100%"
                   height="100%"
-                  src={`https://www.youtube.com/embed/${currentTrack.id}?autoplay=1`}
+                  src={`https://www.youtube.com/embed/${currentTrack.id}?autoplay=1&playsinline=1`}
                   title={currentTrack.title}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -148,14 +157,14 @@ function MusicPageContent() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {results.map((result) => (
               <div
                 key={result.id}
                 onClick={() => setCurrentTrack(result)}
-                className="cursor-pointer group"
+                className="cursor-pointer group bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
               >
-                <div className="aspect-video rounded-xl overflow-hidden mb-3 relative">
+                <div className="aspect-video relative">
                   <img
                     src={result.thumbnail}
                     alt={result.title}
@@ -167,25 +176,19 @@ function MusicPageContent() {
                     </div>
                   </div>
                 </div>
-                <h3 className="font-medium text-gray-800 dark:text-gray-200 line-clamp-2 group-hover:text-pink-500 transition-colors">
-                  {result.title}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  {result.channelTitle}
-                </p>
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-800 dark:text-gray-200 line-clamp-2 group-hover:text-pink-500 transition-colors">
+                    {result.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {result.channelTitle}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </main>
     </div>
-  )
-}
-
-export default function MusicPage() {
-  return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <MusicPageContent />
-    </ErrorBoundary>
   )
 } 
