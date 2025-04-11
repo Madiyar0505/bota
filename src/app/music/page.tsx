@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Search } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Sidebar } from "@/components/sidebar"
+import { ErrorBoundary, FallbackProps } from "react-error-boundary"
 
 interface SearchResult {
   id: string
@@ -12,7 +13,22 @@ interface SearchResult {
   channelTitle: string
 }
 
-export default function MusicPage() {
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <h2 className="text-2xl font-bold text-red-500 mb-4">Что-то пошло не так</h2>
+      <p className="text-gray-600 mb-4">{error.message}</p>
+      <button
+        onClick={resetErrorBoundary}
+        className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600"
+      >
+        Попробовать снова
+      </button>
+    </div>
+  )
+}
+
+function MusicPageContent() {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -56,7 +72,6 @@ export default function MusicPage() {
       }))
 
       setResults(formattedResults)
-      // Автоматически выбираем первый трек
       if (formattedResults.length > 0) {
         setCurrentTrack(formattedResults[0])
       }
@@ -111,7 +126,6 @@ export default function MusicPage() {
             </div>
           )}
 
-          {/* Текущий трек */}
           {currentTrack && (
             <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
               <div className="aspect-video w-full">
@@ -134,7 +148,6 @@ export default function MusicPage() {
             </div>
           )}
 
-          {/* Список рекомендаций */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {results.map((result) => (
               <div
@@ -166,5 +179,13 @@ export default function MusicPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function MusicPage() {
+  return (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <MusicPageContent />
+    </ErrorBoundary>
   )
 } 
